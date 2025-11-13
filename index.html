@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calculadora de presupuestos de traducción</title>
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icon-16.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="icon-180.png">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Calculadora">
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    :root{--bg:#f6f7fb;--card:#fff;--text:#0f172a;--muted:#64748b;--primary:#089d9b;--border:#e5e7eb}
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(135deg,#f7fafc,#eef2f7);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    .container{max-width:980px;margin:0 auto;padding:24px}
+    h1{font-size:clamp(22px,2.8vw,28px);margin:0 0 6px 0} p{margin:0 0 16px 0;color:var(--muted)}
+    .tabs{display:flex;gap:8px;margin:0 0 16px 0}
+    .btn{border:1px solid var(--border);background:var(--card);padding:10px 14px;border-radius:16px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+    .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px}
+    @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 16px 18px;box-shadow:0 4px 16px rgba(15,23,42,.06)}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+    select,input[type=number],input[type=text],textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff}
+    fieldset{border:none;padding:0;margin:0 0 12px 0}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .chip{border:1px solid var(--border);border-radius:12px;padding:8px 10px;display:inline-flex;align-items:center;gap:6px;background:#fff;cursor:pointer}
+    .muted{color:var(--muted);font-size:12px}
+    .price{font-size:36px;font-weight:700;margin-top:8px}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th,td{padding:8px;border-top:1px solid var(--border);text-align:left;vertical-align:top}
+    thead th{position:sticky;top:0;background:#f8fafc}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .hidden{display:none}
+    .json{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;font-size:12px}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#f1f5f9;border:1px solid var(--border);font-size:12px}
+    .col{flex:1;min-width:160px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .section-title{margin:10px 0 4px 0;font-weight:600}
+  </style>
+  <link rel="apple-touch-startup-image" media="(device-width: 682px) and (device-height: 910px)" href="splash-2048x2732.png">
+  <link rel="apple-touch-startup-image" media="(device-width: 556px) and (device-height: 741px)" href="splash-1668x2224.png">
+  <link rel="apple-touch-startup-image" media="(device-width: 512px) and (device-height: 682px)" href="splash-1536x2048.png">
+  <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px)" href="splash-1284x2778.png">
+  <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px)" href="splash-1170x2532.png">
+  <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px)" href="splash-1125x2436.png">
+  <link rel="apple-touch-startup-image" media="(device-width: 276px) and (device-height: 597px)" href="splash-828x1792.png">
+  <link rel="apple-touch-startup-image" media="(device-width: 250px) and (device-height: 444px)" href="splash-750x1334.png">
+  <link rel="apple-touch-startup-image" media="(device-width: 213px) and (device-height: 378px)" href="splash-640x1136.png">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div style="display:flex;align-items:center;gap:12px"><img src="logo.webp" alt="Logo" style="height:36px; width:auto"><h1 style="margin:0">Calculadora de presupuestos de traducción</h1></div>
+    </header>
+
+    <nav class="tabs">
+      <button id="tab-calc" class="btn primary">Calcular</button>
+      <button id="tab-rates" class="btn">Editar tarifas</button>
+    </nav>
+
+    <section id="calc" class="grid">
+      <div class="card">
+        <h2 style="margin:0 0 12px 0;font-size:18px">Datos de entrada</h2>
+
+        <div style="margin-bottom:12px">
+          <label>Idioma origen</label>
+          <select id="origen"></select>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <label>Idioma destino</label>
+          <select id="destino"></select>
+          <div id="no-destinos" class="muted hidden">— No hay destinos para este origen —</div>
+        </div>
+
+        <fieldset>
+          <label>Tipo de traducción</label>
+          <div class="row" role="radiogroup">
+            <label class="chip"><input type="radio" name="tipo" value="jurada" checked> Jurada</label>
+            <label class="chip"><input type="radio" name="tipo" value="noJurada"> No jurada</label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <label>Tipo de cálculo</label>
+          <div class="row" role="radiogroup">
+            <label class="chip"><input type="radio" name="modo" value="palabras" checked> Por palabra</label>
+            <label class="chip"><input type="radio" name="modo" value="paginas"> Doc pequeño (1–2 páginas)</label>
+          </div>
+        </fieldset>
+
+        <div id="panel-palabras">
+          <label>Número de palabras</label>
+          <input id="palabras" type="number" min="0" value="0" placeholder="Ej.: 1200">
+          <div class="muted" id="tarifa-palabra">Tarifa: —</div>
+          <div class="muted" id="ajuste-palabras"></div>
+        </div>
+
+        <div id="panel-paginas" class="hidden">
+          <label>Tamaño del documento</label>
+          <div class="row">
+            <label class="chip"><input type="radio" name="paginas" value="1" checked> 1 página <span id="chip1" class="pill"></span></label>
+            <label class="chip"><input type="radio" name="paginas" value="2"> 2 páginas <span id="chip2" class="pill"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin:0 0 12px 0;font-size:18px">Resultado</h2>
+        <div class="muted" style="line-height:1.8" id="resumen">—</div>
+        <div class="price" id="precio">0,00 €</div>
+        <div class="muted" id="detalle"></div>
+      </div>
+    </section>
+
+    <section id="rates" class="grid hidden">
+      <div class="card">
+        <h2 style="margin:0 0 12px 0;font-size:18px">Añadir o modificar un par</h2>
+
+        <div class="row">
+          <div class="col">
+            <label>Idioma origen</label>
+            <input id="o" type="text" placeholder="Ej.: Español">
+          </div>
+          <div class="col">
+            <label>Idioma destino</label>
+            <input id="d" type="text" placeholder="Ej.: Inglés">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div class="section-title">JURADA</div>
+            <div class="row">
+              <div class="col">
+                <label>€/palabra</label>
+                <input id="j_perWord" type="number" step="0.0001" min="0" value="0.105">
+              </div>
+              <div class="col">
+                <label>1 página (€)</label>
+                <input id="j_onePage" type="number" step="0.01" min="0" value="38">
+              </div>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <div class="col">
+                <label>2 páginas (€)</label>
+                <input id="j_twoPages" type="number" step="0.01" min="0" value="48">
+              </div>
+              <div class="col">
+                <label>+% palabras (opcional)</label>
+                <input id="j_wordPct" type="number" step="1" min="0" value="0">
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="section-title">NO JURADA</div>
+            <div class="row">
+              <div class="col">
+                <label>€/palabra</label>
+                <input id="n_perWord" type="number" step="0.0001" min="0" value="0.105">
+              </div>
+              <div class="col">
+                <label>1 página (€)</label>
+                <input id="n_onePage" type="number" step="0.01" min="0" value="28">
+              </div>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <div class="col">
+                <label>2 páginas (€)</label>
+                <input id="n_twoPages" type="number" step="0.01" min="0" value="38">
+              </div>
+              <div class="col">
+                <label>+% palabras (opcional)</label>
+                <input id="n_wordPct" type="number" step="1" min="0" value="0">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions" style="margin-top:12px">
+          <button id="guardar" class="btn primary">Guardar par</button>
+          <button id="limpiar" class="btn">Limpiar</button>
+        </div>
+
+        <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)">
+        <h3 style="margin:0 0 8px 0;font-size:16px">Pares existentes</h3>
+        <div style="max-height:360px;overflow:auto;border:1px solid var(--border);border-radius:12px">
+          <table id="tabla">
+            <thead>
+              <tr>
+                <th>Origen</th><th>Destino</th>
+                <th>JURADA<br><span class="muted">€/pal — 1 pág — 2 págs — +%pal</span></th>
+                <th>NO JURADA<br><span class="muted">€/pal — 1 pág — 2 págs — +%pal</span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin:0 0 12px 0;font-size:18px">Exportar / Importar JSON</h2>
+        <p class="muted">Se guarda en <code>translation_rates_v3</code>.</p>
+        <textarea id="raw" class="json" style="width:100%;height:320px"></textarea>
+        <div class="actions" style="margin-top:10px">
+          <button id="importar" class="btn primary">Importar</button>
+          <button id="restaurar" class="btn">Restaurar desde memoria</button>
+          <button id="ejemplo" class="btn">Ejemplo mínimo</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+// Registrar service worker para caché offline (opcional)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(e){ console.warn('SW no registrado', e); });
+  });
+}
+</script>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'translation_rates_v3';
+  // Estructura: rates[O][D][tipo] = { perWord, onePage, twoPages, wordPct? }
+  const DEFAULT_RATES = {
+    'Inglés': {
+      'Español': {
+        'jurada':   { perWord: 0.105, onePage: 38, twoPages: 48, wordPct: 0 },
+        'noJurada': { perWord: 0.105, onePage: 28, twoPages: 38, wordPct: 0 }
+      }
+    },
+    'Español': {
+      'Inglés': {
+        'jurada':   { perWord: 0.105, onePage: 38, twoPages: 48, wordPct: 0 },
+        'noJurada': { perWord: 0.105, onePage: 28, twoPages: 38, wordPct: 0 }
+      },
+      'Francés': {
+        'jurada':   { perWord: 0.12,  onePage: 45, twoPages: 65, wordPct: 0 },
+        'noJurada': { perWord: 0.10,  onePage: 35, twoPages: 45, wordPct: 0 }
+      },
+      'Ruso': {
+        'jurada':   { perWord: 0.16,  onePage: 75, twoPages: 90, wordPct: 0 },
+        'noJurada': { perWord: 0.12,  onePage: 60, twoPages: 75, wordPct: 0 }
+      },
+      'Alemán': {
+        'jurada':   { perWord: 0.16,  onePage: 75, twoPages: 90, wordPct: 0 },
+        'noJurada': { perWord: 0.16,  onePage: 60, twoPages: 80, wordPct: 0 }
+      }
+    },
+    'Francés': {
+      'Español': {
+        'jurada':   { perWord: 0.125, onePage: 45, twoPages: 48, wordPct: 0 },
+        'noJurada': { perWord: 0.105, onePage: null, twoPages: null, wordPct: 0 }
+      }
+    },
+    'Ruso': {
+      'Español': {
+        'jurada':   { perWord: 0.125, onePage: 65, twoPages: 75, wordPct: 30 },
+        'noJurada': { perWord: 0.105, onePage: 40, twoPages: 65, wordPct: 25 }
+      }
+    },
+    'Alemán': {
+      'Español': {
+        'jurada':   { perWord: 0.14,  onePage: 65, twoPages: 80, wordPct: 30 },
+        'noJurada': { perWord: 0.12,  onePage: 45, twoPages: 65, wordPct: 30 }
+      }
+    }
+  };
+
+  function eur(n){
+    try{ return new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(Number(n)||0); }
+    catch(_){ return (Number(n)||0).toFixed(2)+' €'; }
+  }
+
+  function loadRates(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const obj = JSON.parse(raw);
+        if(obj && typeof obj==='object') return obj;
+      }
+      return DEFAULT_RATES;
+    }catch(e){ return DEFAULT_RATES; }
+  }
+  function saveRates(r){ localStorage.setItem(STORAGE_KEY, JSON.stringify(r)); }
+
+  // ===== Estado y utilidades UI =====
+  let rates = loadRates();
+
+  const origenSel = document.getElementById('origen');
+  const destinoSel = document.getElementById('destino');
+  const noDest = document.getElementById('no-destinos');
+  const palabras = document.getElementById('palabras');
+  const tarifaPalabra = document.getElementById('tarifa-palabra');
+  const ajustePalabras = document.getElementById('ajuste-palabras');
+  const chip1 = document.getElementById('chip1');
+  const chip2 = document.getElementById('chip2');
+  const panelPal = document.getElementById('panel-palabras');
+  const panelPag = document.getElementById('panel-paginas');
+  const resumen = document.getElementById('resumen');
+  const precio = document.getElementById('precio');
+  const detalle = document.getElementById('detalle');
+
+  function renderOrigen(){
+    const keys = Object.keys(rates).sort();
+    origenSel.innerHTML = keys.map(k=>`<option>${k}</option>`).join('');
+    if(!origenSel.value && keys.length) origenSel.value = keys[0];
+    renderDestino();
+  }
+  function renderDestino(){
+    const o = origenSel.value;
+    const dests = (rates[o] ? Object.keys(rates[o]).sort() : []);
+    if(dests.length===0){
+      destinoSel.innerHTML = '<option value=\"\">—</option>';
+      noDest.classList.remove('hidden');
+    }else{
+      destinoSel.innerHTML = dests.map(k=>`<option>${k}</option>`).join('');
+      noDest.classList.add('hidden');
+    }
+    updateTarifasUI();
+    calcular();
+  }
+
+  function tipoActual(){
+    const el = document.querySelector('input[name=\"tipo\"]:checked');
+    return el ? el.value : 'jurada'; // 'jurada' | 'noJurada'
+  }
+  function modoActual(){
+    const el = document.querySelector('input[name=\"modo\"]:checked');
+    return el ? el.value : 'palabras'; // 'palabras' | 'paginas'
+  }
+  function paginasActual(){
+    const el = document.querySelector('input[name=\"paginas\"]:checked');
+    return el ? Number(el.value) : 1;
+  }
+
+  function getTarifa(){
+    const o = origenSel.value;
+    const d = destinoSel.value;
+    const t = rates[o] && rates[o][d] ? rates[o][d] : null;
+    if(!t) return null;
+    return t[tipoActual()] || null;
+  }
+
+  function updateTarifasUI(){
+    const t = getTarifa();
+    tarifaPalabra.textContent = t ? `Tarifa: ${eur(t.perWord)} por palabra` : 'Tarifa: —';
+    const pct = t && t.wordPct ? t.wordPct : 0;
+    ajustePalabras.textContent = pct ? `Se añade un ${pct}% de palabras antes del cálculo.` : '';
+    chip1.textContent = t && t.onePage!=null ? eur(t.onePage) : '—';
+    chip2.textContent = t && t.twoPages!=null ? eur(t.twoPages) : '—';
+  }
+
+  function calcular(){
+    const o = origenSel.value || '—';
+    const d = destinoSel.value || '—';
+    const tipotxt = tipoActual()==='jurada' ? 'JURADA' : 'NO JURADA';
+    const t = getTarifa();
+    resumen.textContent = `Par de idiomas: ${o} → ${d} · ${tipotxt}`;
+    if(!t){ precio.textContent = eur(0); detalle.textContent='No hay tarifas para este par.'; return; }
+    if(modoActual()==='palabras'){
+      const w = Number(palabras.value)||0;
+      const pct = Number(t.wordPct)||0;
+      const wAdj = w * (1 + pct/100);
+      const p = wAdj * (t.perWord||0);
+      precio.textContent = eur(p);
+      detalle.textContent = pct ? `(${w} palabras → ${wAdj.toFixed(0)} con +${pct}% × ${eur(t.perWord)})` : `(${w} palabras × ${eur(t.perWord)})`;
+    }else{
+      const pg = paginasActual();
+      const chosen = pg===1 ? t.onePage : t.twoPages;
+      if(chosen==null){
+        precio.textContent = eur(0);
+        detalle.textContent = 'Precio por páginas: sin establecer para este par/tipo.';
+      }else{
+        precio.textContent = eur(chosen||0);
+        detalle.textContent = pg===1 ? 'Documento pequeño de 1 página' : 'Documento pequeño de 2 páginas';
+      }
+    }
+  }
+
+  // Listeners
+  document.querySelectorAll('input[name=\"tipo\"]').forEach(el=> el.addEventListener('change', ()=>{ updateTarifasUI(); calcular(); }));
+  document.querySelectorAll('input[name=\"modo\"]').forEach(el=>{
+    el.addEventListener('change', ()=>{
+      const m = modoActual();
+      panelPal.classList.toggle('hidden', m!=='palabras');
+      panelPag.classList.toggle('hidden', m!=='paginas');
+      calcular();
+    });
+  });
+  document.querySelectorAll('input[name=\"paginas\"]').forEach(el=> el.addEventListener('change', calcular));
+  palabras.addEventListener('input', calcular);
+  origenSel.addEventListener('change', renderDestino);
+  destinoSel.addEventListener('change', ()=>{ updateTarifasUI(); calcular(); });
+
+  // ===== Editor =====
+  const o = document.getElementById('o');
+  const d = document.getElementById('d');
+  const j_perWord = document.getElementById('j_perWord');
+  const j_onePage = document.getElementById('j_onePage');
+  const j_twoPages = document.getElementById('j_twoPages');
+  const j_wordPct = document.getElementById('j_wordPct');
+  const n_perWord = document.getElementById('n_perWord');
+  const n_onePage = document.getElementById('n_onePage');
+  const n_twoPages = document.getElementById('n_twoPages');
+  const n_wordPct = document.getElementById('n_wordPct');
+  const guardar = document.getElementById('guardar');
+  const limpiar = document.getElementById('limpiar');
+  const tablaBody = document.querySelector('#tabla tbody');
+  const raw = document.getElementById('raw');
+  const importar = document.getElementById('importar');
+  const restaurar = document.getElementById('restaurar');
+  const ejemplo = document.getElementById('ejemplo');
+
+  function renderTabla(){
+    const rows = [];
+    Object.keys(rates).sort().forEach(O=>{
+      Object.keys(rates[O]).sort().forEach(D=>{
+        const t = rates[O][D];
+        const j = t.jurada||{perWord:0,onePage:0,twoPages:0,wordPct:0};
+        const n = t.noJurada||{perWord:0,onePage:0,twoPages:0,wordPct:0};
+        rows.push(`<tr>
+          <td>${O}</td><td>${D}</td>
+          <td>${j.perWord} — ${j.onePage==null?'—':j.onePage} — ${j.twoPages==null?'—':j.twoPages} — ${j.wordPct||0}%</td>
+          <td>${n.perWord} — ${n.onePage==null?'—':n.onePage} — ${n.twoPages==null?'—':n.twoPages} — ${n.wordPct||0}%</td>
+          <td style="text-align:right"><button data-o="${O}" data-d="${D}" class="btn">Eliminar</button></td>
+        </tr>`);
+      });
+    });
+    tablaBody.innerHTML = rows.join('') || '<tr><td colspan="5" class="muted">(Sin pares aún)</td></tr>';
+    tablaBody.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const O = btn.getAttribute('data-o');
+        const D = btn.getAttribute('data-d');
+        if(confirm(`¿Eliminar la tarifa ${O} → ${D}?`)){
+          delete rates[O][D];
+          if(Object.keys(rates[O]).length===0) delete rates[O];
+          saveRates(rates);
+          syncAll();
+        }
+      });
+    });
+  }
+
+  function syncAll(){
+    renderOrigen();
+    renderTabla();
+    raw.value = JSON.stringify(rates, null, 2);
+    updateTarifasUI();
+    calcular();
+  }
+
+  guardar.addEventListener('click', ()=>{
+    if(!o.value.trim() || !d.value.trim()) return alert('Rellena origen y destino');
+    const O = o.value.trim();
+    const D = d.value.trim();
+    rates[O] = rates[O] || {};
+    rates[O][D] = {
+      jurada:   { perWord: Number(j_perWord.value)||0, onePage: numOrNull(j_onePage.value), twoPages: numOrNull(j_twoPages.value), wordPct: Number(j_wordPct.value)||0 },
+      noJurada: { perWord: Number(n_perWord.value)||0, onePage: numOrNull(n_onePage.value), twoPages: numOrNull(n_twoPages.value), wordPct: Number(n_wordPct.value)||0 }
+    };
+    saveRates(rates);
+    o.value=''; d.value='';
+    syncAll();
+  });
+  function numOrNull(v){ if(v==='' || (typeof v==='string' && v.toLowerCase()==='sin establecer')) return null; const n=Number(v); return isNaN(n)?null:n; }
+  limpiar.addEventListener('click', ()=>{ o.value=''; d.value=''; });
+
+  importar.addEventListener('click', ()=>{
+    try{
+      const obj = JSON.parse(raw.value);
+      if(!obj || typeof obj!=='object') throw new Error('Formato inválido');
+      rates = obj; saveRates(rates); syncAll();
+      alert('Tarifas importadas correctamente.');
+    }catch(e){ alert('No se pudo importar el JSON: '+ e.message); }
+  });
+  restaurar.addEventListener('click', ()=>{ raw.value = JSON.stringify(rates, null, 2); });
+  ejemplo.addEventListener('click', ()=>{
+    raw.value = JSON.stringify(DEFAULT_RATES, null, 2);
+  });
+
+  // Tabs
+  const tabCalc = document.getElementById('tab-calc');
+  const tabRates = document.getElementById('tab-rates');
+  const secCalc = document.getElementById('calc');
+  const secRates = document.getElementById('rates');
+  function show(tab){
+    if(tab==='calc'){
+      secCalc.classList.remove('hidden'); secRates.classList.add('hidden');
+      tabCalc.classList.add('primary'); tabRates.classList.remove('primary');
+    }else{
+      secRates.classList.remove('hidden'); secCalc.classList.add('hidden');
+      tabRates.classList.add('primary'); tabCalc.classList.remove('primary');
+    }
+  }
+  tabCalc.addEventListener('click', ()=>show('calc'));
+  tabRates.addEventListener('click', ()=>show('rates'));
+
+  // Init
+  syncAll();
+})();
+</script>
+</body>
+</html>
